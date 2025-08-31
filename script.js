@@ -34,10 +34,7 @@ function build() {
     img.alt = `Image ${i + 1}`;
     card.appendChild(img);
 
-    card.addEventListener("click", () => {
-      snapTo(i);
-      setTimeout(() => galleryEl.classList.remove("is-open"), 200);
-    });
+    card.addEventListener("click", () => selectCard(i));
 
     stackEl.appendChild(card);
   });
@@ -63,21 +60,22 @@ function updateTransforms(initial = false) {
 
   cards.forEach((card, i) => {
     if (i === activeIndex) {
-      // Active (preview) card explicit transform
-      card.style.transform = `
+      if (window.innerWidth < 480) {
+      } else {
+        card.style.transform = `
         translate(-50%, -50%)
         translate3d(0, 0, 0)
         rotateY(0deg)
         rotateX(0deg)
         scale(1)
       `;
-      card.style.opacity = "1";
-      card.style.zIndex = "2000";
+        card.style.opacity = "1";
+        card.style.zIndex = "2000";
+      }
       card.classList.add("is-preview");
       return;
     }
 
-    // Background stack arrangement
     const offset = i * 6;
     const depth = -i * 40;
     const tilt = -40 + i * 2;
@@ -100,6 +98,7 @@ function updateTransforms(initial = false) {
     );
 }
 
+// ====== SNAP TO CARD ======
 function snapTo(targetIndex) {
   targetIndex = Math.max(0, Math.min(IMAGES.length - 1, targetIndex));
   if (targetIndex === activeIndex) return;
@@ -110,7 +109,7 @@ function snapTo(targetIndex) {
   const prevCard = stackEl.children[prevIndex];
   const nextCard = stackEl.children[nextIndex];
 
-  // 1️⃣ Animate previous card back into stack
+  // Animate previous card back
   if (prevCard) {
     prevCard.classList.remove("is-preview", "stack-forward");
     prevCard.classList.add("stack-back");
@@ -130,10 +129,8 @@ function snapTo(targetIndex) {
     prevCard.style.zIndex = String(1000 - prevIndex);
   }
 
-  // 2️⃣ After "back" animation finishes, animate next card forward
   setTimeout(() => {
     activeIndex = nextIndex;
-
     if (nextCard) {
       nextCard.classList.remove("stack-back");
       nextCard.classList.add("stack-forward", "is-preview");
@@ -149,15 +146,13 @@ function snapTo(targetIndex) {
       nextCard.style.zIndex = "2000";
     }
 
-    // Update viewer image
     updateViewerImage(IMAGES[activeIndex]);
 
-    // Clean up transition classes
     setTimeout(() => {
       if (prevCard) prevCard.classList.remove("stack-back");
       if (nextCard) nextCard.classList.remove("stack-forward");
     }, 700);
-  }, 500); // match your stack-back transition duration
+  }, 500);
 }
 
 // ====== VIEWER IMAGE TRANSITION ======
@@ -187,14 +182,27 @@ function updateViewerImage(src) {
     }, 150);
   });
 }
-// ====== INPUT: KEYBOARD ======
-window.addEventListener("keydown", (e) => {
-  if (!galleryEl.classList.contains("is-open")) return;
-  if (e.key === "ArrowRight") snapTo(activeIndex + 1);
-  if (e.key === "ArrowLeft") snapTo(activeIndex - 1);
-  if (e.key === "Enter" || e.key === "Escape")
-    galleryEl.classList.remove("is-open");
-});
+
+// ====== SELECT CARD (PREVIEW → BACKGROUND) ======
+function selectCard(index) {
+  const card = stackEl.children[index];
+
+  // Morph card into fullscreen background
+  galleryBgImg.src = card.querySelector(".card__img").src;
+  galleryBgImg.style.transition = "transform 0.7s cubic-bezier(0.19,1,0.22,1)";
+  galleryBgImg.style.transform = "translate(0,0) scale(1)";
+  galleryBgImg.style.opacity = "1";
+
+  card.style.transition =
+    "opacity 0.5s ease-out, transform 0.7s cubic-bezier(0.19,1,0.22,1)";
+  card.style.transform = "translate(-50%, -50%) scale(1.15)";
+  card.style.zIndex = 2000;
+
+  setTimeout(() => {
+    card.classList.remove("is-preview");
+    updateTransforms();
+  }, 700);
+}
 
 // ====== GALLERY OPEN/CLOSE ======
 openGalleryBtn.addEventListener("click", () => {
@@ -202,6 +210,21 @@ openGalleryBtn.addEventListener("click", () => {
   galleryEl.style.display = "grid";
   void galleryEl.offsetWidth;
   galleryEl.classList.add("is-open");
+
+  // Morph viewer image into active card in stack
+  const activeCard = stackEl.children[activeIndex];
+  const rect = activeCard.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  galleryBgImg.src = viewerImg.src;
+  galleryBgImg.style.transition = "transform 0.7s cubic-bezier(0.19,1,0.22,1)";
+  galleryBgImg.style.transform = `
+    translate(${rect.left}px, ${rect.top}px)
+    scale(${rect.width / vw}, ${rect.height / vh})
+  `;
+  galleryBgImg.style.opacity = "1";
+
   updateTransforms();
 });
 
@@ -212,13 +235,16 @@ closeGalleryBtn.addEventListener("click", () => {
   }, 500);
 });
 
-function clearTransition(card) {
-  setTimeout(() => {
-    card.style.transition = "";
-    card.classList.remove("stack-forward", "stack-back");
-  }, 800); // match your longest transition
-}
+// ====== KEYBOARD NAV ======
+window.addEventListener("keydown", (e) => {
+  if (!galleryEl.classList.contains("is-open")) return;
+  if (e.key === "ArrowRight") snapTo(activeIndex + 1);
+  if (e.key === "ArrowLeft") snapTo(activeIndex - 1);
+  if (e.key === "Enter" || e.key === "Escape")
+    galleryEl.classList.remove("is-open");
+});
 
+// ====== TOUCH NAV ======
 let touchStartX = 0;
 let touchStartY = 0;
 
@@ -228,22 +254,15 @@ stackEl.addEventListener("touchstart", (e) => {
 });
 
 stackEl.addEventListener("touchend", (e) => {
-  const touchEndX = e.changedTouches[0].clientX;
-  const touchEndY = e.changedTouches[0].clientY;
-
-  const dx = touchEndX - touchStartX;
-  const dy = touchEndY - touchStartY;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
 
   if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
-    // Horizontal swipe
-    if (dx < 0) snapTo(activeIndex + 1);
-    else snapTo(activeIndex - 1);
+    dx < 0 ? snapTo(activeIndex + 1) : snapTo(activeIndex - 1);
   } else if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 30) {
-    // Vertical swipe
-    if (dy < 0) snapTo(activeIndex + 1);
-    else snapTo(activeIndex - 1);
+    dy < 0 ? snapTo(activeIndex + 1) : snapTo(activeIndex - 1);
   }
 });
 
-// Init
+// ====== INIT ======
 build();

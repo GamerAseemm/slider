@@ -1,28 +1,62 @@
+/* ========================
+   Root Variables
+   ======================== */
 :root {
   --ui-bg: #000;
   --ui-fg: #fff;
-  --card-w: min(28vw, 280px); /* smaller cards */
+
+  /* Card dimensions */
+  --card-w: min(28vw, 280px);
   --card-h: min(42vh, 420px);
-  --gap: 12px; /* reduced spacing between stacked cards for easier navigation */
-  --tilt: 18deg; /* reduced Y-tilt of side cards */
-  --glass-opacity: 0.7; /* opacity for glass effect */
-  --glass-blur: 8px; /* blur amount for glass effect */
-  --glass-border: rgba(255, 255, 255, 0.2); /* border color for glass effect */
-}
-.stack {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  perspective: 2000px;
-  transform-style: preserve-3d;
-  touch-action: pan-x;
-  user-select: none;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  --gap: 12px;
+  --tilt: 18deg;
+
+  /* Glass effect */
+  --glass-opacity: 0.7;
+  --glass-blur: 8px;
+  --glass-border: rgba(255, 255, 255, 0.2);
 }
 
+/* ========================
+   Global Styles
+   ======================== */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--ui-bg);
+  color: var(--ui-fg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  overflow: hidden;
+}
+
+/* ========================
+   Stack / Card Container
+   ======================== */
+.stack {
+  position: absolute;
+  left: -20%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  perspective: 2000px;
+  transform-style: preserve-3d;
+  padding-left: 10px;
+  touch-action: pan-x;
+  user-select: none;
+  margin: 0 auto;
+}
+
+/* ========================
+   Cards
+   ======================== */
 .card {
   position: absolute;
   left: 50%;
@@ -33,72 +67,53 @@
   border-radius: 18px;
   overflow: hidden;
   background: rgba(17, 17, 17, 0.8);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55), 0 2px 10px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  will-change: transform, opacity;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.55), 0 2px 10px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  transition: transform 0.6s ease, opacity 0.6s ease, box-shadow 0.25s ease, filter 0.2s ease;
+  will-change: transform, opacity, filter;
 }
 
-/* Transition for moving back into the stack */
-.card.stack-back {
-  transform: translate3d(0, 0, 0);
+.card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  transition: filter 0.3s ease-out;
+}
+
+/* Active / Inactive Cards */
+.card.is-active {
+  box-shadow: 0 18px 60px rgba(0,0,0,0.7), 0 0 0 2px rgba(255,255,255,0.1);
+  backdrop-filter: none;
+  background: #111;
+}
+
+.card:not(.is-active) {
+  filter: saturate(0.8) contrast(0.9) ;
+  opacity: var(--glass-opacity);
+}
+
+/* Card Animations */
+.card.stack-forward {
   transition: transform 0.5s ease-in, opacity 0.5s ease-in;
 }
 
-/* Transition for coming forward */
-.card.stack-forward {
-  transition: transform 0.7s cubic-bezier(0.19, 1, 0.22, 1),
-    opacity 0.6s ease-out;
+.card.stack-back {
+  transition: transform 0.5s ease-in, opacity 0.5s ease-in;
 }
 
-.card:not(.is-preview) {
-  /* remove transform completely */
-  z-index: 1000;
+.card.is-preview {
+  z-index: 2000 !important;
+  opacity: 1 !important;
+  transform: translate(-50%, -50%) translate3d(20vw, 0, 0) rotateY(0deg) rotateX(0deg) scale(1.15) !important;
+  transition: transform 0.7s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.6s ease-out;
 }
 
-.card:not(.is-preview) {
-  opacity: var(--glass-opacity);
-  filter: saturate(0.85) contrast(0.95);
-  backdrop-filter: blur(var(--glass-blur));
-  background: rgba(255, 255, 255, 0.1);
-  z-index: 1000;
-  /* remove any transform here, JS handles it */
-}
-
-/* Mobile-first responsive adjustments */
-@media (max-width: 768px) {
-  :root {
-    --card-w: 50vw;
-    --card-h: 45vh;
-    --gap: 30px; /* reduced spacing for mobile */
-    --glass-blur: 6px;
-  }
-}
-
-@media (max-width: 480px) {
-  :root {
-    --card-w: 60vw;
-    --card-h: 40vh;
-    --gap: 20px; /* further reduced spacing for small phones */
-    --glass-blur: 4px;
-  }
-}
-
-* {
-  box-sizing: border-box;
-}
-html,
-body {
-  height: 100%;
-}
-body {
-  margin: 0;
-  background: var(--ui-bg);
-  color: var(--ui-fg);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  overflow: hidden; /* viewer is fullscreen */
-}
-
-/* === Fullscreen Viewer === */
+/* ========================
+   Fullscreen Viewer
+   ======================== */
 .viewer {
   position: fixed;
   inset: 0;
@@ -106,28 +121,21 @@ body {
   place-items: center;
   background: #000;
 }
-.viewer__img,
-.viewer__img-exit {
+
+.viewer__img, .viewer__img-exit {
   position: absolute;
   width: 100vw;
   height: 100vh;
   object-fit: cover;
   user-select: none;
   -webkit-user-drag: none;
-  transition: opacity 0.5s ease-out,
-    transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-  z-index: 1;
+  transition: opacity 0.5s ease-out, transform 0.5s cubic-bezier(0.19,1,0.22,1);
 }
 
-.viewer__img-exit {
-  z-index: 0;
-}
+.viewer__img-exit { z-index: 0; }
+.viewer__img { z-index: 1; }
 
-.viewer__img {
-  z-index: 1;
-}
-
-/* Gallery toggle button (grid icon) */
+/* Gallery toggle button */
 .viewer__toggle {
   position: fixed;
   right: 18px;
@@ -136,83 +144,42 @@ body {
   height: 52px;
   border-radius: 999px;
   border: 0;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255,255,255,0.85);
   color: #000;
   cursor: pointer;
   display: grid;
   place-items: center;
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 22px rgba(0,0,0,0.4);
   z-index: 1200;
 }
-.viewer__toggle:active {
-  transform: scale(0.98);
-}
-.viewer__toggle svg {
-  width: 26px;
-  height: 26px;
-}
+.viewer__toggle:active { transform: scale(0.98); }
+.viewer__toggle svg { width: 26px; height: 26px; }
 
-@media (max-width: 480px) {
-  .viewer__toggle {
-    width: 44px;
-    height: 44px;
-    right: 14px;
-    bottom: 14px;
-  }
-  .viewer__toggle svg {
-    width: 22px;
-    height: 22px;
-  }
-}
-
-/* === Stacked Gallery Overlay === */
+/* ========================
+   Gallery Overlay
+   ======================== */
 .gallery {
   position: fixed;
   inset: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: rgba(0, 0, 0, 0.95);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.5s cubic-bezier(0.19, 1, 0.22, 1),
-    transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-  backdrop-filter: blur(3px);
   transform: scale(0.95);
+  backdrop-filter: blur(3px);
+  transition: opacity 0.5s cubic-bezier(0.19,1,0.22,1), transform 0.5s cubic-bezier(0.19,1,0.22,1);
   z-index: 1000;
-  overflow: hidden;
 }
+
 .gallery.is-open {
   opacity: 1;
   pointer-events: auto;
   transform: scale(1);
   overflow: hidden;
-  scrollbar-width: none; /* Firefox */
 }
 
-.gallery.is-open::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Edge */
-}
-
-/* Snapping animation styles */
-.stack.is-snapping .card:not(.is-active) {
-  transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1),
-    opacity 0.8s ease-out, filter 0.8s ease-out, box-shadow 0.8s ease-out !important;
-}
-
-/* Enhanced glass effect for inactive cards */
-.card:not(.is-active) {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(var(--glass-blur));
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--glass-border);
-}
-
-.card:not(.is-active) .card__img {
-  filter: saturate(0.8) contrast(0.9) blur(1px);
-}
-
+/* Gallery close button */
 .gallery__close {
   position: absolute;
   top: 16px;
@@ -221,7 +188,7 @@ body {
   height: 44px;
   border-radius: 999px;
   border: 0;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255,255,255,0.85);
   color: #000;
   font-size: 24px;
   cursor: pointer;
@@ -229,112 +196,9 @@ body {
   place-items: center;
 }
 
-@media (max-width: 480px) {
-  .gallery__close {
-    width: 38px;
-    height: 38px;
-    top: 12px;
-    right: 12px;
-    font-size: 20px;
-  }
-}
-
-/* Stack track - horizontal layout, vertically centered */
-.stack {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  perspective: 2000px;
-  touch-action: pan-x;
-  user-select: none;
-  margin: 0 auto;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  transform: none; /* tilt the entire stack 30° */
-  transform-style: preserve-3d; /* ensure children preserve 3D */
-  padding-left: 10px;
-}
-
-.stack {
-  position: absolute;
-  left: -20%; /* adjust distance from screen edge */
-  top: 50%;
-  transform: translateY(-50%); /* vertical centering only */
-  perspective: 2000px;
-  transform-style: preserve-3d;
-}
-
-@media (max-width: 480px) {
-  .stack {
-    width: 100%;
-    perspective: 1200px;
-  }
-}
-
-/* Cards are absolutely centered; JS positions them with translate/scale/rotate */
-.card {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: var(--card-w);
-  height: var(--card-h);
-  transform-origin: center center;
-  border-radius: 18px;
-  overflow: hidden;
-  background: rgba(17, 17, 17, 0.8);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55), 0 2px 10px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  transition: box-shadow 0.25s ease, filter 0.2s ease,
-    transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-  will-change: transform, opacity, filter;
-  backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-}
-
-.card {
-  transition: transform 0.6s ease, opacity 0.6s ease;
-}
-
-.card__img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  -webkit-user-drag: none;
-  pointer-events: none;
-  transition: filter 0.3s ease-out;
-}
-.card.is-active {
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.7), 0 0 0 2px rgba(255, 255, 255, 0.1);
-  backdrop-filter: none;
-  background: #111;
-}
-
-.card.stack-forward {
-  transition: transform 0.5s ease-in, opacity 0.5s ease-in;
-
-}
-
-/* Going back */
-.card.stack-back {
-  transition: transform 0.5s ease-in, opacity 0.5s ease-in;
-}
-
-.card.is-preview {
-  z-index: 2000 !important;
-  opacity: 1 !important;
-  transform: translate(-50%, -50%) translate3d(20vw, 0, 0) rotateY(0deg)
-    rotateX(0deg) scale(1.15) !important;
-  transition: transform 0.7s cubic-bezier(0.19, 1, 0.22, 1),
-    opacity 0.6s ease-out;
-}
-
-.card:not(.is-active) {
-  filter: saturate(0.85) contrast(0.95);
-  opacity: var(--glass-opacity);
-}
-
-/* Progress dots (optional) */
+/* ========================
+   Progress Dots
+   ======================== */
 .dots {
   position: absolute;
   bottom: 22px;
@@ -343,28 +207,21 @@ body {
   display: flex;
   gap: 8px;
 }
+
 .dot {
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255,255,255,0.35);
 }
+
 .dot.is-on {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255,255,255,0.95);
 }
 
-@media (max-width: 480px) {
-  .dots {
-    bottom: 16px;
-    gap: 6px;
-  }
-  .dot {
-    width: 6px;
-    height: 6px;
-  }
-}
-
-/* Helper hint */
+/* ========================
+   Helper / Hint
+   ======================== */
 .hint {
   position: absolute;
   top: 18px;
@@ -373,9 +230,51 @@ body {
   opacity: 0.7;
 }
 
-@media (max-width: 480px) {
-  .hint {
-    font-size: 11px;
-    max-width: 70%;
+/* ========================
+   Responsive Media Queries
+   ======================== */
+@media (max-width: 768px) {
+  :root {
+    --card-w: 50vw;
+    --card-h: 45vh;
+    --gap: 30px;
+    --glass-blur: 6px;
   }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --card-w: 45vw;
+    --card-h: 30vh;
+    --gap: 20px;
+    --glass-blur: 4px;
+  }
+
+  .card.is-preview {
+    transform: translate(50%, -50%) !important;
+  }
+  
+  .viewer__toggle {
+    width: 44px;
+    height: 44px;
+    right: 14px;
+    bottom: 14px;
+  }
+  
+  .viewer__toggle svg { width: 22px; height: 22px; }
+
+  .gallery__close {
+    width: 38px;
+    height: 38px;
+    top: 12px;
+    right: 12px;
+    font-size: 20px;
+  }
+
+  .dots { bottom: 16px; gap: 6px; }
+  .dot { width: 6px; height: 6px; }
+
+  .hint { font-size: 11px; max-width: 70%; }
+
+  .stack { perspective: 1200px; }
 }
