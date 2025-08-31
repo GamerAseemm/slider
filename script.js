@@ -1,12 +1,15 @@
 // ====== CONFIG ======
 const IMAGES = [
-  "https://picsum.photos/id/1015/1600/1000",
-  "https://picsum.photos/id/1016/1600/1000",
-  "https://picsum.photos/id/1018/1600/1000",
-  "https://picsum.photos/id/1020/1600/1000",
-  "https://picsum.photos/id/1024/1600/1000",
-  "https://picsum.photos/id/1027/1600/1000",
-];
+  "1.jpeg",
+  "2.jpeg",
+  "3.jpeg",
+  "4.jpeg",
+  "5.jpeg",
+  "6.jpeg",
+  "7.jpeg",
+  "8.jpeg",
+  "9.jpeg"
+]
 
 // ====== ELEMENTS ======
 const viewerImg = document.getElementById("viewerImg");
@@ -264,5 +267,4 @@ stackEl.addEventListener("touchend", (e) => {
   }
 });
 
-// ====== INIT ======
-build();
+build()
