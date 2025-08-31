@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Stack & Swipe Image Browser</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<!-- Fullscreen viewer -->
+<div class="viewer">
+  <img class="viewer__img" id="viewerImg" alt="preview">
+  <button class="viewer__toggle" id="openGallery" aria-label="Open gallery" title="Open gallery">
+    <!-- simple grid icon -->
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+      <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+      <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+      <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+    </svg>
+  </button>
+</div>
+
+<!-- Stacked gallery overlay -->
+<div class="gallery" id="gallery">
+  <div class="hint">Swipe / drag or use mouse wheel • click a card to select • ← → keys work too</div>
+  <button class="gallery__close" id="closeGallery" aria-label="Close gallery" title="Close">×</button>
+
+  <div class="stack" id="stack"></div>
+  <div class="dots" id="dots"></div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
